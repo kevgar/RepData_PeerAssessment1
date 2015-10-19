@@ -1,50 +1,85 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 One of the first steps is to load the data and Process/transform the data (if necessary) into a format suitable for analysis. Before doing this we setup the workspace and load some packages
-```{r}
+
+```r
 rm(list=ls())
 packages<-c("data.table","dplyr")
 sapply(packages,require,character.only=TRUE,quietly=TRUE)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:data.table':
+## 
+##     between, last
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```
+## data.table      dplyr 
+##       TRUE       TRUE
+```
+
+```r
 setwd("~/Github/RepData_PeerAssessment1")
 ```
 Then we extract the data.
-```{r}
+
+```r
 f <- file.path(getwd(),"activity.zip")
 unzip(f)
 ```
 Then we read in the "activity.csv" file and convert it to a data table
-```{r}
+
+```r
 DT_activity<-data.table(read.csv(file.path(getwd(),"activity.csv")))
 ```
 
 
 ## What is mean total number of steps taken per day?
 To answer this question, we first group the original data table by date
-```{r}
+
+```r
 DT_activity <- group_by(DT_activity,date) 
 ```
 Then we calculate the total number of steps taken per day and store the result as a new data table
-```{r}
+
+```r
 DT_totalSteps <- summarise(DT_activity, sum(steps))
 ```
 Then we assign column lables in the new data table
-```{r}
+
+```r
 setnames(DT_totalSteps, c("date","totalSteps"))
 ```
 Then we ungroup the original data table so we can make use of it again later. 
-```{r}
+
+```r
 summarise(ungroup(DT_activity), sum(steps))
+```
+
+```
+## Source: local data table [1 x 1]
+## 
+##   sum(steps)
+## 1         NA
 ```
 Then we use the new data table to generate a histogram of the total number of steps taken per day
 
-```{r}
+
+```r
 with(DT_totalSteps,
         hist(totalSteps, 
                 main="Histogram of Steps Taken Per Day",
@@ -53,17 +88,26 @@ with(DT_totalSteps,
 )
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+
 Calculate and report the mean and median of the total number of steps taken per day
 
 We do this by calculating the mean and median of `totalSteps` and storing the result as a new data table.
-```{r}
+
+```r
 DT_totalStepsSummary <- summarise(DT_totalSteps, 
         mean(totalSteps,na.rm=T),median(totalSteps,na.rm=T))
 ```
 The resulting data table has one observation of two variables. We assign column labels and display the result.
-```{r}
+
+```r
 setnames(DT_totalStepsSummary, c("mean","median"))
 data.table(DT_totalStepsSummary)
+```
+
+```
+##        mean median
+## 1: 10766.19  10765
 ```
 
 
@@ -71,33 +115,64 @@ data.table(DT_totalStepsSummary)
 
 ## What is the average daily activity pattern?
 To answer the question, we first group the activity data by 5-minute time interval. 
-```{r}
+
+```r
 DT_activity <- group_by(DT_activity,interval)
 ```
 Then we calculate the average number of steps taken by interval and store the result as a new data table.
-```{r}
+
+```r
 DT_activityPattern <- summarise(DT_activity, mean(steps))
 ```
 Viewing the new data table we see that the values for `mean(steps)` are all NA. This is probably because each 5-minute interval has at least one incomplete case and therefore NA is returned for the arithmatic mean. We can strip out the NA values before computation proceeds by specifing `na.rm=TRUE` within the call to `mean()`.
-```{r}
+
+```r
 DT_activityPattern <- summarise(DT_activity, mean(steps,na.rm=TRUE))
 ```
 Then we assign column lables in the new data table
-```{r}
+
+```r
 setnames(DT_activityPattern, c("interval","averageSteps"))
 ```
 Viewing the new data table we that the values for `averageSteps` are all numeric.
 
 Then we ungroup the original data table so we can make use of it again later. 
-```{r}
+
+```r
 summarise(ungroup(DT_activity), mean(steps, na.rm=TRUE))
 ```
+
+```
+## Source: local data table [1 x 1]
+## 
+##   mean(steps, na.rm = TRUE)
+## 1                   37.3826
+```
 Next we use the new data table to generate a time series plot of the average number of steps taken (y-axis) over each of the 5-minute intervals (x-axis). To make the plot easier to read, we change the `interval` column to a `1:288` to denoting the 5-minute intervals in a day.
-```{r}
+
+```r
 DT_activityPattern[,interval:=c(1:nrow(DT_activityPattern))]
 ```
 
-```{r}
+```
+## Source: local data table [288 x 2]
+## 
+##    interval averageSteps
+## 1         1    1.7169811
+## 2         2    0.3396226
+## 3         3    0.1320755
+## 4         4    0.1509434
+## 5         5    0.0754717
+## 6         6    2.0943396
+## 7         7    0.5283019
+## 8         8    0.8679245
+## 9         9    0.0000000
+## 10       10    1.4716981
+## ..      ...          ...
+```
+
+
+```r
 with(DT_activityPattern,
         plot(interval, averageSteps,
                 main="Daily Activity Pattern",
@@ -109,15 +184,24 @@ with(DT_activityPattern,
 )
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-17-1.png) 
+
 **Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?**  
 
  To answer the question, we calculate the maximum of `averageSteps` and store the result as a new data table. 
-```{r}
+
+```r
 DT_maxAverageSteps <- summarize(DT_activityPattern, which.max(averageSteps))
 ```
 The resulting data table has one observation of one variable. Displaying the result we the maximum `averageSteps` occurs in the 104th 5-minute interval.
-```{r}
+
+```r
 data.table(DT_maxAverageSteps)
+```
+
+```
+##    which.max(averageSteps)
+## 1:                     104
 ```
 
 
@@ -127,8 +211,13 @@ data.table(DT_maxAverageSteps)
 
 Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
-```{r}
+
+```r
 sum(is.na(DT_activity$steps))
+```
+
+```
+## [1] 2304
 ```
 
 Next we are asked to devise a strategy for filling in all of the missing values in the dataset.
@@ -136,50 +225,97 @@ Next we are asked to devise a strategy for filling in all of the missing values 
 To fill NA values we use the mean number of steps taken for the corresponding 5-minute interval. 
 
 To obtain these values we, first need to group the original data by interval 
-```{r}
+
+```r
 DT_activity <- group_by(DT_activity,interval)
 ```
 Then we calculate average number of steps taken for each interval and store the result as a new data table. 
-```{r}
+
+```r
 DT_impute <- summarise(DT_activity, mean(steps,na.rm=TRUE))
 ```
 Then we assign column labels to the new data table
-```{r}
+
+```r
 setnames(DT_impute, c("interval","imputedSteps"))
 ```
 Then we replace `interval` in the original data table with a repeating index from 1-288 to denote the 5-minute intervals in a day
-```{r}
+
+```r
 DT_activity[,interval:=rep(1:nrow(DT_impute),length.out=nrow(DT_activity))]
 ```
+
+```
+## Source: local data table [17,568 x 3]
+## Groups: interval
+## 
+##    steps       date interval
+## 1     NA 2012-10-01        1
+## 2     NA 2012-10-01        2
+## 3     NA 2012-10-01        3
+## 4     NA 2012-10-01        4
+## 5     NA 2012-10-01        5
+## 6     NA 2012-10-01        6
+## 7     NA 2012-10-01        7
+## 8     NA 2012-10-01        8
+## 9     NA 2012-10-01        9
+## 10    NA 2012-10-01       10
+## ..   ...        ...      ...
+```
 Next we add a column to the original data table with a repeating vector of the imputed values
-```{r}
+
+```r
 DT_activity[,imputedSteps := rep(DT_impute$imputedSteps,length.out=nrow(DT_activity))]
 ```
+
+```
+## Source: local data table [17,568 x 4]
+## Groups: interval
+## 
+##    steps       date interval imputedSteps
+## 1     NA 2012-10-01        1    1.7169811
+## 2     NA 2012-10-01        2    0.3396226
+## 3     NA 2012-10-01        3    0.1320755
+## 4     NA 2012-10-01        4    0.1509434
+## 5     NA 2012-10-01        5    0.0754717
+## 6     NA 2012-10-01        6    2.0943396
+## 7     NA 2012-10-01        7    0.5283019
+## 8     NA 2012-10-01        8    0.8679245
+## 9     NA 2012-10-01        9    0.0000000
+## 10    NA 2012-10-01       10    1.4716981
+## ..   ...        ...      ...          ...
+```
 Then we add a new column to the data table that is identical to `steps` but with NA values replaced with the computed values from `imputedSteps`
-```{r}
+
+```r
 DT_activity$stepsComplete<-ifelse(!is.na(DT_activity$steps),DT_activity$steps,DT_activity$imputedSteps)
 ```
 Finally we assign a label for the new column
-```{r}
+
+```r
 setnames(DT_activity,c("steps","date","interval","imputedSteps","stepsComplete"))
 ```
 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.
 
 To do this we first need to group the data by date
-```{r}
+
+```r
 DT_activity <- group_by(DT_activity,date)
 ```
 Then we calculate the total number of steps taken by date
-```{r}
+
+```r
 DT_totalStepsComplete <- summarise(DT_activity, sum(stepsComplete))
 ```
 Then we assign column lables for the new data table
-```{r}
+
+```r
 setnames(DT_totalStepsComplete, c("date","totalStepsComplete"))
 ```
 
 Then we can create a histogram
-```{r}
+
+```r
 with(DT_totalStepsComplete,
         hist(totalStepsComplete, 
                 main="Histogram of Steps Taken Per Day",
@@ -188,17 +324,26 @@ with(DT_totalStepsComplete,
 )
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-31-1.png) 
+
 Calculate and report the mean and median total number of steps taken per day
 
 We do this by calculating the mean and median of `totalStepsComplete` and storing the result as a new data table.
-```{r}
+
+```r
 DT_totalStepsCompleteSummary <- summarise(DT_totalStepsComplete, 
         mean(totalStepsComplete),median(totalStepsComplete))
 ```
 The resulting data table has one observation of two variables. We assign column labels and display the result.
-```{r}
+
+```r
 setnames(DT_totalStepsCompleteSummary, c("mean","median"))
 data.table(DT_totalStepsCompleteSummary)
+```
+
+```
+##        mean   median
+## 1: 10766.19 10766.19
 ```
 **Do these values differ from the estimates from the first part of the assignment?**
 The new values are almost the same as the estimates from the first part of the assignment. The mean is `10766.19` which is identical to the previous mean. The median is `10766.19`, wheras before the median was `10765`.

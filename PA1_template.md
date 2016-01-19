@@ -1,52 +1,19 @@
 # Reproducible Research: Peer Assessment 1
 
-
-## Loading and preprocessing the data
-One of the first steps is to load the data and Process/transform the data (if necessary) into a format suitable for analysis. Before doing this we setup the workspace and load some packages
+**Setup environment**
 
 ```r
 rm(list=ls())
-packages<-c("data.table","dplyr")
-sapply(packages,require,character.only=TRUE,quietly=TRUE)
+library("data.table"); library("dplyr")
+setwd('~/GitHub/05_ReproducableResearch/RepData_PeerAssessment1')
 ```
-
-```
-## 
-## Attaching package: 'dplyr'
-## 
-## The following objects are masked from 'package:data.table':
-## 
-##     between, last
-## 
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-## 
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```
-## data.table      dplyr 
-##       TRUE       TRUE
-```
-
-```r
-setwd("~/Github/RepData_PeerAssessment1")
-```
-Then we extract the data.
+**Load data**
 
 ```r
 f <- file.path(getwd(),"activity.zip")
 unzip(f)
-```
-Then we read in the "activity.csv" file and convert it to a data table
-
-```r
 DT_activity<-data.table(read.csv(file.path(getwd(),"activity.csv")))
 ```
-
 
 ## What is mean total number of steps taken per day?
 To answer this question, we first group the original data table by date
@@ -74,6 +41,7 @@ summarise(ungroup(DT_activity), sum(steps))
 ## Source: local data table [1 x 1]
 ## 
 ##   sum(steps)
+##        (int)
 ## 1         NA
 ```
 Then we use the new data table to generate a histogram of the total number of steps taken per day
@@ -88,7 +56,7 @@ with(DT_totalSteps,
 )
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)\
 
 Calculate and report the mean and median of the total number of steps taken per day
 
@@ -146,6 +114,7 @@ summarise(ungroup(DT_activity), mean(steps, na.rm=TRUE))
 ## Source: local data table [1 x 1]
 ## 
 ##   mean(steps, na.rm = TRUE)
+##                       (dbl)
 ## 1                   37.3826
 ```
 Next we use the new data table to generate a time series plot of the average number of steps taken (y-axis) over each of the 5-minute intervals (x-axis). To make the plot easier to read, we change the `interval` column to a `1:288` to denoting the 5-minute intervals in a day.
@@ -158,6 +127,7 @@ DT_activityPattern[,interval:=c(1:nrow(DT_activityPattern))]
 ## Source: local data table [288 x 2]
 ## 
 ##    interval averageSteps
+##       (int)        (dbl)
 ## 1         1    1.7169811
 ## 2         2    0.3396226
 ## 3         3    0.1320755
@@ -184,7 +154,7 @@ with(DT_activityPattern,
 )
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-17-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-16-1.png)\
 
 **Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?**  
 
@@ -250,6 +220,7 @@ DT_activity[,interval:=rep(1:nrow(DT_impute),length.out=nrow(DT_activity))]
 ## Groups: interval
 ## 
 ##    steps       date interval
+##    (int)     (fctr)    (int)
 ## 1     NA 2012-10-01        1
 ## 2     NA 2012-10-01        2
 ## 3     NA 2012-10-01        3
@@ -273,6 +244,7 @@ DT_activity[,imputedSteps := rep(DT_impute$imputedSteps,length.out=nrow(DT_activ
 ## Groups: interval
 ## 
 ##    steps       date interval imputedSteps
+##    (int)     (fctr)    (int)        (dbl)
 ## 1     NA 2012-10-01        1    1.7169811
 ## 2     NA 2012-10-01        2    0.3396226
 ## 3     NA 2012-10-01        3    0.1320755
@@ -324,7 +296,7 @@ with(DT_totalStepsComplete,
 )
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-31-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-30-1.png)\
 
 Calculate and report the mean and median total number of steps taken per day
 

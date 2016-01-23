@@ -1,8 +1,8 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
-html_document:
-keep_md: yes
+  html_document:
+    keep_md: yes
 ---
 
 **1. Code for reading the dataset and processing the data**
@@ -19,11 +19,11 @@ Loading data
 f <- file.path(getwd(),"activity.zip") %>% unzip()
 DT_activity<-data.table(read.csv(file.path(getwd(),"activity.csv")))
 ```
-
 Making `interval` an index from `1:288` to number the 5-minute intervals in a day.
 ```{r, tidy=TRUE}
 DT_activity[,interval:=c(1:288)]
 ```
+
 
 **2. Histogram of the total number of steps taken per day**
 
@@ -37,19 +37,17 @@ summarise(ungroup(DT_activity), sum(steps)) #ungroup data
 Creating plot
 ```{r, tidy=TRUE}
 with(DT_totalSteps,
-     hist(totalSteps, 
-          main="Histogram of Steps Taken Per Day",
-          xlab="Number of steps taken per day"
-     )
+        hist(totalSteps, 
+                main="Histogram of Steps Taken Per Day",
+                xlab="Number of steps taken per day"
+        )
 )
 ```
 
 **3. Mean and median of the total number of steps taken per day**
-
 ```{r, tidy=TRUE}
 summarise(DT_totalSteps, mean(totalSteps,na.rm=T), median(totalSteps,na.rm=T)) %>% setnames(c("mean","median")) %>% data.table()
 ```
-
 **4. Time series plot of the average number of steps taken**
 
 Calculating the mean steps taken by interval
@@ -57,48 +55,42 @@ Calculating the mean steps taken by interval
 DT_activity <- group_by(DT_activity,interval) #group data
 summarise(DT_activity, mean(steps)) %>% setnames(c("interval","averageSteps")) %>% head(3)
 ```
-
 Note the values for `mean(steps)` are all NA. This tells us there is at least one incomplete case within each interval. To deal with this we specify `na.rm=TRUE` within the call to `mean()`.
 ```{r, tidy=TRUE}
 DT_activityPattern <- summarise(DT_activity, mean(steps,na.rm=TRUE)) %>% 
-        setnames(c("interval","averageSteps"))
+  setnames(c("interval","averageSteps"))
 head(DT_activityPattern, 3)
 summarise(ungroup(DT_activity), mean(steps)) #ungroup data
 ```
-
 Creating time-series plot 
 ```{r, tidy=TRUE}
 with(DT_activityPattern,
-     plot(interval, averageSteps,
-          main="Average Daily Activity Pattern",
-          xlab="Interval",
-          ylab="Average steps",
-          type="l"
-     )
+        plot(interval, averageSteps,
+                main="Average Daily Activity Pattern",
+                xlab="Interval",
+                ylab="Average steps",
+                type="l"
+        )
 ) 
 
 ```
-
 **5. The 5-minute interval that, on average, contains the maximum number of steps**
 
 Calculating the max of `averageSteps` and the interval at which it occurs
 ```{r, tidy=TRUE}
 summarize(DT_activityPattern, which.max(averageSteps), max(averageSteps)) %>% 
-        setnames(c("interval","max")) %>% data.table()
+  setnames(c("interval","max")) %>% data.table()
 ```
-
 **6. Code to describe and show a strategy for imputing missing data**
 
 Counting the number of rows that have missing data
 ```{r, tidy=TRUE}
 summarize(DT_activity, sum(is.na(steps))) %>% setnames(c("NAs")) %>% data.table()
 ```
-
 Filling NA values with the mean
 ```{r, tidy=TRUE, warning=FALSE}
 for (col in c("steps")) DT_activity[is.na(get(col)), (col) := mean(DT_activity$steps,na.rm=TRUE)]
 ```
-
 Verifying the NA values were filled
 ```{r, tidy=TRUE}
 summarize(DT_activity, sum(is.na(steps))) %>% setnames(c("NAs")) %>% data.table()
@@ -112,23 +104,20 @@ DT_activity <- group_by(DT_activity,date) #group data
 DT_totalSteps <- summarise(DT_activity, sum(steps)) %>% setnames(c("date","totalSteps")) 
 summarise(ungroup(DT_activity), sum(steps)) #ungroup data
 ```
-
 Creating plot
 ```{r, tidy=TRUE}
 with(DT_totalSteps,
-     hist(totalSteps, 
-          main="Histogram of Steps Taken Per Day",
-          xlab="Number of steps taken per day"
-          )
-     )
+        hist(totalSteps, 
+                main="Histogram of Steps Taken Per Day",
+                xlab="Number of steps taken per day"
+        )
+)
 ```
-
 Calculating and reporting the mean and median of the total number of steps taken per day
 ```{r, tidy=TRUE}
 summarise(DT_totalSteps, mean(totalSteps),median(totalSteps)) %>% 
-        setnames(c("mean","median")) %>% data.table()
+  setnames(c("mean","median")) %>% data.table()
 ```
-
 **Mean and median of the total number of steps taken per day**
 
 These values differ from the estimates from the first part of the assignment. The mean and median decreased by `14.45` steps and `109` steps, respectively. 
@@ -139,29 +128,28 @@ Calculating mean steps taken by interval for weekdays and for weedends
 ```{r, tidy=TRUE}
 DT_activity <- DT_activity[,wday:=isWeekday(DT_totalSteps$date, wday=1:5)] #create wday variable
 DT_wdays <- DT_activity[wday==TRUE] %>% #filter rows where wday==TRUE
-        group_by(interval) %>% #group data
-        summarise(mean(steps)) %>% #calculate mean steps by interval
-        setnames(c("interval","averageSteps")) %>%
-        setorder(interval)
+  group_by(interval) %>% #group data
+  summarise(mean(steps)) %>% #calculate mean steps by interval
+  setnames(c("interval","averageSteps")) %>%
+  setorder(interval)
 DT_wends <- DT_activity[wday==FALSE] %>% #filter rows where wday==FALSE
-        group_by(interval) %>% #group data
-        summarise(mean(steps)) %>% #calculate mean steps by interval
-        setnames(c("interval","averageSteps")) %>%
-        setorder(interval)
+  group_by(interval) %>% #group data
+  summarise(mean(steps)) %>% #calculate mean steps by interval
+  setnames(c("interval","averageSteps")) %>%
+  setorder(interval)
 ```
-
 Creating panel plot
 ```{r}
 ggplot(DT_wdays,aes(interval,averageSteps)) + 
-        geom_line(aes(color="wdays")) + 
-        geom_line(data=DT_wends,aes(color="wends")) + 
-        labs(list(x="Interval", y="Average steps")) + 
-        scale_x_continuous(breaks=seq(0,300,50)) +
-        scale_y_continuous(breaks=seq(0,250,50)) +
-        scale_colour_manual("", breaks = c("wdays", "wends"), values = c("blue", "brown")) + 
-        ggtitle("Average Daily Activity Pattern: Weekdays & Weekends") + 
-        theme(plot.title = element_text(face="bold"),
-              axis.title.x = element_text(face="bold"),
-              axis.title.y = element_text(face="bold"),
-              legend.position = c(.91, .85))
+  geom_line(aes(color="wdays")) + 
+  geom_line(data=DT_wends,aes(color="wends")) + 
+  labs(list(x="Interval", y="Average steps")) + 
+  scale_x_continuous(breaks=seq(0,300,50)) +
+  scale_y_continuous(breaks=seq(0,250,50)) +
+  scale_colour_manual("", breaks = c("wdays", "wends"), values = c("blue", "brown")) + 
+  ggtitle("Average Daily Activity Pattern: Weekdays & Weekends") + 
+  theme(plot.title = element_text(face="bold"),
+        axis.title.x = element_text(face="bold"),
+        axis.title.y = element_text(face="bold"),
+        legend.position = c(.91, .85))
 ```

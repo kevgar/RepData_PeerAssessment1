@@ -2,33 +2,40 @@
 title: "Reproducible Research: Peer Assessment 1"
 output: 
   html_document:
-    keep_md: true
+    keep_md: yes
 ---
 
-**Setup environment**
-```{r, hide=TRUE, message=FALSE}
+**1. Code for reading the dataset and processing the data**
+
+Setting up environment
+```{r, tidy=TRUE, hide=TRUE, message=FALSE, warning=FALSE}
 rm(list=ls())
-library("data.table"); library("dplyr"); library("timeDate"); library("R.devices")
+library("data.table"); library("dplyr"); library("timeDate"); library("ggplot2")
 setwd('~/GitHub/05_ReproducableResearch/RepData_PeerAssessment1')
 ```
-**Load data**
-```{r}
+
+Loading data
+```{r, tidy=TRUE}
 f <- file.path(getwd(),"activity.zip") %>% unzip()
 DT_activity<-data.table(read.csv(file.path(getwd(),"activity.csv")))
 ```
-Make `interval` an index from `1:288` to number the 5-minute intervals in a day.
-```{r}
+Making `interval` an index from `1:288` to number the 5-minute intervals in a day.
+```{r, tidy=TRUE}
 DT_activity[,interval:=c(1:288)]
 ```
-## What is mean total number of steps taken per day?
-Calculate total steps per day
-```{r}
+
+
+**2. Histogram of the total number of steps taken per day**
+
+Manipulating data
+```{r, tidy=TRUE}
 DT_activity <- group_by(DT_activity,date) #group data
 DT_totalSteps <- summarise(DT_activity, sum(steps)) %>% setnames(c("date","totalSteps")) 
 summarise(ungroup(DT_activity), sum(steps)) #ungroup data
 ```
-Generate histogram of the total number of steps taken per day
-```{r}
+
+Creating plot
+```{r, tidy=TRUE}
 with(DT_totalSteps,
         hist(totalSteps, 
                 main="Histogram of Steps Taken Per Day",
@@ -36,26 +43,26 @@ with(DT_totalSteps,
         )
 )
 ```
-Calculate and report the mean and median of the total number of steps taken per day
-```{r}
-summarise(DT_totalSteps, mean(totalSteps,na.rm=T), median(totalSteps,na.rm=T)) %>% 
-  setnames(c("mean","median")) %>% data.table()
+**3. Mean and median of the total number of steps taken per day**
+```{r, tidy=TRUE}
+summarise(DT_totalSteps, mean(totalSteps,na.rm=T), median(totalSteps,na.rm=T)) %>% setnames(c("mean","median")) %>% data.table()
 ```
-## What is the average daily activity pattern?
-Calculate the mean steps taken by interval
-```{r}
+**4. Time series plot of the average number of steps taken**
+
+Calculating the mean steps taken by interval
+```{r, tidy=TRUE}
 DT_activity <- group_by(DT_activity,interval) #group data
 summarise(DT_activity, mean(steps)) %>% setnames(c("interval","averageSteps")) %>% head(3)
 ```
-Note the values for `mean(steps)` are all NA. This tells us there is at least one incomplete case within each interval. To fix this we specify `na.rm=TRUE` within the call to `mean()`.
-```{r}
+Note the values for `mean(steps)` are all NA. This tells us there is at least one incomplete case within each interval. To deal with this we specify `na.rm=TRUE` within the call to `mean()`.
+```{r, tidy=TRUE}
 DT_activityPattern <- summarise(DT_activity, mean(steps,na.rm=TRUE)) %>% 
   setnames(c("interval","averageSteps"))
 head(DT_activityPattern, 3)
 summarise(ungroup(DT_activity), mean(steps)) #ungroup data
 ```
-Plot a time series with average steps taken (y-axis) for each 5-minute intervals (x-axis). 
-```{r}
+Creating time-series plot 
+```{r, tidy=TRUE}
 with(DT_activityPattern,
         plot(interval, averageSteps,
                 main="Average Daily Activity Pattern",
@@ -66,31 +73,38 @@ with(DT_activityPattern,
 ) 
 
 ```
-**Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?**  
-Calculate the max of `averageSteps` and the interval at which it occurs
-```{r}
+**5. The 5-minute interval that, on average, contains the maximum number of steps**
+
+Calculating the max of `averageSteps` and the interval at which it occurs
+```{r, tidy=TRUE}
 summarize(DT_activityPattern, which.max(averageSteps), max(averageSteps)) %>% 
   setnames(c("interval","max")) %>% data.table()
 ```
-## Imputing missing values
-Count the number of rows containing NA values
-```{r}
+**6. Code to describe and show a strategy for imputing missing data**
+
+Counting the number of rows that have missing data
+```{r, tidy=TRUE}
 summarize(DT_activity, sum(is.na(steps))) %>% setnames(c("NAs")) %>% data.table()
 ```
-**First approach**
-Fill NA values using the mean
-```{r, warning=FALSE}
+Filling NA values with the mean
+```{r, tidy=TRUE, warning=FALSE}
 for (col in c("steps")) DT_activity[is.na(get(col)), (col) := mean(DT_activity$steps,na.rm=TRUE)]
+```
+Verifying the NA values were filled
+```{r, tidy=TRUE}
 summarize(DT_activity, sum(is.na(steps))) %>% setnames(c("NAs")) %>% data.table()
 ```
-Calculate the total number of steps per day using filled data
-```{R}
+
+**7. Histogram of the total number of steps taken each day after the missing data has been filled**
+
+Manipulating data
+```{r, tidy=TRUE}
 DT_activity <- group_by(DT_activity,date) #group data
 DT_totalSteps <- summarise(DT_activity, sum(steps)) %>% setnames(c("date","totalSteps")) 
 summarise(ungroup(DT_activity), sum(steps)) #ungroup data
 ```
-Generate histogram of the total number of steps taken per day
-```{r}
+Creating plot
+```{r, tidy=TRUE}
 with(DT_totalSteps,
         hist(totalSteps, 
                 main="Histogram of Steps Taken Per Day",
@@ -98,18 +112,19 @@ with(DT_totalSteps,
         )
 )
 ```
-Calculate and report the mean and median of the total number of steps taken per day
-```{r}
+Calculating and reporting the mean and median of the total number of steps taken per day
+```{r, tidy=TRUE}
 summarise(DT_totalSteps, mean(totalSteps),median(totalSteps)) %>% 
   setnames(c("mean","median")) %>% data.table()
 ```
-**Do these values differ from the estimates from the first part of the assignment?**
-Yes. The mean and median decreased by `14.45` steps and `109` steps, respectively. 
+**Mean and median of the total number of steps taken per day**
 
-## Are there differences in activity patterns between weekdays and weekends?
+These values differ from the estimates from the first part of the assignment. The mean and median decreased by `14.45` steps and `109` steps, respectively. 
 
-Calculate the mean steps taken by interval for weekdays and weedends
-```{r}
+**8. Panel plot comparing the average number of steps taken per 5-minute interval accross weekdays and weekends**
+
+Calculating mean steps taken by interval for weekdays and for weedends
+```{r, tidy=TRUE}
 DT_activity <- DT_activity[,wday:=isWeekday(DT_totalSteps$date, wday=1:5)] #create wday variable
 DT_wdays <- DT_activity[wday==TRUE] %>% #filter rows where wday==TRUE
   group_by(interval) %>% #group data
@@ -122,14 +137,18 @@ DT_wends <- DT_activity[wday==FALSE] %>% #filter rows where wday==FALSE
   setnames(c("interval","averageSteps")) %>%
   setorder(interval)
 ```
-Create a panel plot comparing the average steps taken per 5-minute interval across weekdays and weekends.
+Creating panel plot
 ```{r}
-with(DT_wdays,
-     plot(interval, averageSteps,main="Average Daily Activity Pattern - Weekdays",
-          xlab="Interval", ylab="Average steps",
-          type="l", col="red"))
-with(DT_wends,
-     plot(interval, averageSteps,main="Average Daily Activity Pattern - Weekends",
-          xlab="Interval", ylab="Average steps",
-          type="l", col="blue"))
+ggplot(DT_wdays,aes(interval,averageSteps)) + 
+  geom_line(aes(color="wdays")) + 
+  geom_line(data=DT_wends,aes(color="wends")) + 
+  labs(list(x="Interval", y="Average steps")) + 
+  scale_x_continuous(breaks=seq(0,300,50)) +
+  scale_y_continuous(breaks=seq(0,250,50)) +
+  scale_colour_manual("", breaks = c("wdays", "wends"), values = c("blue", "brown")) + 
+  ggtitle("Average Daily Activity Pattern: Weekdays & Weekends") + 
+  theme(plot.title = element_text(face="bold"),
+        axis.title.x = element_text(face="bold"),
+        axis.title.y = element_text(face="bold"),
+        legend.position = c(.91, .85))
 ```

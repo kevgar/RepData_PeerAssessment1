@@ -43,6 +43,7 @@ with(DT_totalSteps,
         )
 )
 ```
+
 **3. Mean and median of the total number of steps taken per day**
 ```{r, tidy=TRUE}
 summarise(DT_totalSteps, mean(totalSteps,na.rm=T), median(totalSteps,na.rm=T)) %>% setnames(c("mean","median")) %>% data.table()

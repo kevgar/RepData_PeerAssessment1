@@ -52,6 +52,7 @@ with(DT_totalSteps, hist(totalSteps, main = "Histogram of Steps Taken Per Day",
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)\
+
 **3. Mean and median of the total number of steps taken per day**
 
 ```r
